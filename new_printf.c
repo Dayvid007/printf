@@ -1,5 +1,4 @@
 #include "main.h"
-void print_slip(char *str, int *char_string);
 /**
  * _printf - The function that prints strings.
  * @format: The argument it takes for varidic functions.
@@ -7,52 +6,89 @@ void print_slip(char *str, int *char_string);
  */
 int _printf(const char *format, ...)
 {
-int j, printed = 0;
-int lenny, char_string = 0;
-int flags, width, precision, size = 0;
-char str[size_of];
+int num;
+int char_string = 0;
+char c_str, *str;
 va_list list_of_char;
 if (format == NULL)
 return (-1);
 va_start(list_of_char, format);
-for (j = 0; format && format[j] != '\0'; j++)
+while (*format)
 {
-if (format[j] != '%')
+if (*format != '%')
 {
-str[char_string++] = format[j];
-if (char_string == size_of)
-print_slip(str, &char_string);
-/* write(1, &format[j], 1); */
-lenny++;
+write(1, format, 1);
+char_string++;
 }
 else
 {
-print_slip(str, &char_string);
-flags = get_flags(format, &j);
-width = get_width(format, &j, list_of_char);
-precision = get_precision(format, &j, list_of_char);
-size = get_size(format,  &j);
-++j;
-printed = handle_print(format, &j, list_of_char, str,
-flags, width, precision, size);
-if (printed == -1)
-return (-1);
-lenny += printed;
+format++;
+if (*format == '\0')
+break;
+if (*format == '%')
+{
+write(1, format, 1);
+char_string++;
 }
+else if (*format == 'c')
+{
+c_str = va_arg(list_of_char, int);
+write(1, &c_str, 1);
+char_string++;
 }
-print_slip(str, &char_string);
+else if (*format == 's')
+{
+str = va_arg(list_of_char, char*);
+write(1, str, strlen(str));
+char_string += strlen(str);
+}
+else if (*format == 'd' || *format == 'i')
+num = va_arg(list_of_char, int);
+char_string += print_number(num);
+}
+format++;
+}
 va_end(list_of_char);
-return (lenny);
+return (char_string);
+}
+/**
+ * print_number - Handle conversion specifiers
+ * @n: Conversion specifier
+ * Return: Number of characters printed for the specifier
+ */
+int print_number(int n)
+{
+char buffer[20];
+int count = 0;
+int i = 0;
+
+if (n < 0)
+{
+write(1, "-", 1);
+count++;
+n = -n;
 }
 
-/**
-*print_slip -  prints the contents of the buffer if it exist
-*@str: The string sha
-*@char_string: The index
-*/
-void print_slip(char *str, int *char_string)
+if (n == 0)
 {
-if (*char_string > 0)
-write(1, &str[0], *char_string);
-*char_string = 0;
+write(1, "0", 1);
+count++;
 }
+else
+{
+while (n != 0)
+{
+buffer[i++] = '0' + n % 10;
+n /= 10;
+}
+
+while (--i >= 0)
+{
+write(1, &buffer[i], 1);
+count++;
+}
+}
+
+return (count);
+}
+
