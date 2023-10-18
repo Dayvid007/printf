@@ -1,94 +1,63 @@
 #include "main.h"
+
+void print_buffer(char buffer[], int *buffer_index);
+
 /**
- * _printf - The function that prints strings.
- * @format: The argument it takes for varidic functions.
- * Return: the length of character.
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
 int _printf(const char *format, ...)
 {
-int num;
-int char_string = 0;
-char c_str, *str;
+int j, char_str  = 0;
+int flags, width, precision, size = 0;
+int buffer_index, char_printed = 0;
 va_list list_of_char;
+char buffer[BUFF_SIZE];
+
 if (format == NULL)
 return (-1);
+
 va_start(list_of_char, format);
-while (*format)
+for (j = 0; format && format[j] != '\0'; j++)
 {
-if (*format != '%')
+if (format[j] != '%')
 {
-write(1, format, 1);
-char_string++;
+buffer[buffer_index++] = format[j];
+if (buffer_index == BUFF_SIZE)
+print_buffer(buffer, &buffer_index);
+/*write(1, &format[j], 1) */
+char_printed++;
 }
 else
 {
-format++;
-if (*format == '\0')
-break;
-if (*format == '%')
-{
-write(1, format, 1);
-char_string++;
+print_buffer(buffer, &buffer_index);
+flags = get_flags(format, &j);
+width = get_width(format, &j, list_of_char);
+precision = get_precision(format, &j, list_of_char);
+size = get_size(format, &j);
+++j;
+
+char_str = handle_print(format, &j, list_of_char, buffer,
+flags, width, precision, size);
+if (char_str == -1)
+return (-1);
+char_printed += char_str;
 }
-else if (*format == 'c')
-{
-c_str = va_arg(list_of_char, int);
-write(1, &c_str, 1);
-char_string++;
 }
-else if (*format == 's')
-{
-str = va_arg(list_of_char, char*);
-write(1, str, strlen(str));
-char_string += strlen(str);
-}
-else if (*format == 'd' || *format == 'i')
-num = va_arg(list_of_char, int);
-char_string += print_number(num);
-}
-format++;
-}
+print_buffer(buffer, &buffer_index);
 va_end(list_of_char);
-return (char_string);
+return (char_printed);
 }
 /**
- * print_number - Handle conversion specifiers
- * @n: Conversion specifier
- * Return: Number of characters printed for the specifier
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buffer_index: Index at which to add next char, represents the length.
  */
-int print_number(int n)
+void print_buffer(char buffer[], int *buffer_index)
 {
-char buffer[20];
-int count = 0;
-int i = 0;
+	if (*buffer_index > 0)
+		write(1, &buffer[0], *buffer_index);
 
-if (n < 0)
-{
-write(1, "-", 1);
-count++;
-n = -n;
+*buffer_index = 0;
 }
-
-if (n == 0)
-{
-write(1, "0", 1);
-count++;
-}
-else
-{
-while (n != 0)
-{
-buffer[i++] = '0' + n % 10;
-n /= 10;
-}
-
-while (--i >= 0)
-{
-write(1, &buffer[i], 1);
-count++;
-}
-}
-
-return (count);
-}
-
